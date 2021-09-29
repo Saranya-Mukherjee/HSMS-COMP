@@ -1,9 +1,22 @@
 # This file handles all IO and graphics.
 # Interface methods:
-# read(detail) ; readRow(details) ;
-# show(detail,value) ; showRow(details) ;
+# read(detail) ; readRow(details, no) ;
+# show(detail,value) ; showRow(details) ; push(detail) ;
+
+'''
+Input restriction methods have been baked in. So use this module for IO.
+Restriction Methods like : Age is numerical, Name will be full name, Checking of valid date, Proper gender, etc.
+
+readRow(["Name", "Age","Gender"],4) : will take the input in the lost 4 times.
+read("Enter age:") : same as input("Enter age:"), but structured.
+
+showRow(details) : Prints the details in boxed form.
+show(detail, value): Prints a single line in a box form.
+push(detail) : same as print(detail), but structured.
+'''
 
 def find_needed_space(details):
+    # Finds the space needed to fit all the data in the list in a proper box type structure.
     spaces=[]
     space=0
     for data in details:
@@ -15,6 +28,7 @@ def find_needed_space(details):
 
 def throwOutput(details):
     # Details is the list of dictionaries containing all data that needs to be displayed.
+    # Displays all the items in the list as a structured box form.
     space = find_needed_space(details) + 5
     number=len(details)
     s,m = "",""
@@ -37,6 +51,7 @@ def throwOutput(details):
 
 def getInput(details):
     # Details is the list of dictionaries containing all data that needs input.
+    # Takes input of all the items in the list as a structured box form and returns a direct box-printable list.
     space = find_needed_space(details) + 30
     number = len(details)
     s, m = "", ""

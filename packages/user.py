@@ -1,18 +1,26 @@
 import mysql.connector
-import grafics
-import command
+from packages import grafics
+from packages import command
 
+# Reads the database credentials taken during initialization.
+f=open("packages/data.txt","r")
+s=f.readlines()[0]
+user=s.split('`')[1]
+pas=s.split('`')[2]
+f.close()
+
+# Makes the necessary database instances.
 db = mysql.connector.connect(
     host="localhost",
-    user="Putin",
-    password="sar0403nya",
+    user=user,
+    password=pas,
     database="Tickets"
 )
 cur=db.cursor()
 trainsdb= mysql.connector.connect(
     host="localhost",
-    user="Putin",
-    password="sar0403nya",
+    user=user,
+    password=pas,
     database="Trains"
 )
 cur_trains=trainsdb.cursor()
@@ -21,6 +29,7 @@ def book():
     destination=grafics.read("Where do you want to go?")
     source=grafics.read("What is your source location?")
     cur_trains.execute(f"SELECT name, cost FROM available WHERE source LIKE '{source}%' AND destination LIKE '{destination}%'")
+    # Takes all the trains and numbers them 1,2,3..., for the user to choose
     trains=command.number([{"Name":t[0],"Cost":str(t[1])} for t in cur_trains.fetchall()])
     if len(trains) == 0:
         grafics.push("No Trains Available.")
@@ -41,6 +50,7 @@ def book():
         else:
             grafics.push("Enter a proper number.")
     date = ""
+    # Validates the date.
     while True:
         date = grafics.read("Enter Date of Journey(DD/MM/YYYY)")
         if len(date) == 10 and date[2] == date[5] == "/":
@@ -57,6 +67,7 @@ def book():
                 print("| Not a valid date. Please try again.")
         else:
             print("| Not a valid date. Please try again.")
+    # Takes the required inputs
     tickets=grafics.readRow(["Name","Age","Gender(M/F)","Aadhar number"],n)
     grafics.showRow(tickets)
     while True:
@@ -68,6 +79,7 @@ def book():
             return
         else:
             grafics.push("Enter proper option.")
+    # Make the queries to write the ticket details to the database.
     for ticket in tickets:
         query=f"INSERT INTO booked (name, age, gender, adh, date) VALUES ('{ticket['Name']}', {int(ticket['Age'])}, '{ticket['Gender(M/F)']}', {ticket['Aadhar number']}, '{date}');"
         cur.execute(query)
@@ -84,10 +96,23 @@ def book():
             grafics.push("Enter proper option.")
 
 def listAll():
-    grafics.push("Here are all your Tickets:")
     cur.execute("SELECT * FROM booked ORDER BY date")
-    grafics.showRow([{"Name":i[0],"Age":str(i[1]),"Gender":i[2],"Aadhar No.":str(i[3]),"Date":i[5]}
-                     for i in cur.fetchall()])
+    # Takes the data and reforms them to a box-printable form.
+    x=[{"Name":i[0],"Age":str(i[1]),"Gender":i[2],"Aadhar No.":str(i[3]),"Date":i[5]}
+                     for i in cur.fetchall()]
+    if len(x)==0:
+        grafics.push("You do not have any tickets.")
+        while True:
+            c = grafics.read("Want to book some tickets? (y/n):")
+            if c.lower() in "y":
+                book()
+                break
+            if c.lower() in "n":
+                return
+            else:
+                grafics.push("Enter proper option.")
+    grafics.push("Here are all your Tickets:")
+    grafics.showRow(x)
 
 def cancel():
     cur.execute("SELECT * FROM booked ORDER BY id")
@@ -104,6 +129,7 @@ def cancel():
             else:
                 grafics.push("Enter proper option.")
     tickets=command.number([{"Name": i[0], "Age": str(i[1]), "Gender": i[2], "Aadhar No.": str(i[3]), "Date": i[5]} for i in x])
+    # Stores the ids in a separate list as ids are not printed, but will be needed later to address the specific ticket.
     ids=command.number([{"id":i[4]} for i in x])
     grafics.push("Select the ticket you want to cancel: ")
     grafics.showRow(tickets)
@@ -123,6 +149,7 @@ def cancel():
             return
         else:
             grafics.push("Enter proper option.")
+    # Makes required queries.
     cur.execute(f"DELETE FROM booked WHERE id={ids[t-1]['id']}")
     db.commit()
     grafics.push(f"{tickets[t-1]['Name']}'s ticket Cancelled.")

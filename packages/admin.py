@@ -1,11 +1,19 @@
 import mysql.connector
-import grafics
-import command_admin as command
+from packages import grafics
+from packages import command_admin as command
 
+# Reads the database credentials taken during initialization.
+f=open("packages/data.txt","r")
+s=f.readlines()[0]
+user=s.split('`')[1]
+pas=s.split('`')[2]
+f.close()
+
+# Makes the necessary database instances.
 db = mysql.connector.connect(
     host="localhost",
-    user="Putin",
-    password="sar0403nya",
+    user=user,
+    password=pas,
     database="Trains"
 )
 cur=db.cursor()
@@ -18,6 +26,7 @@ def add():
             break
         else:
             grafics.push("Enter a proper number.")
+    # Takes the required inputs
     trains=grafics.readRow(["Name","Cost","Source","Destination","Year"],n)
     grafics.showRow(trains)
     while True:
@@ -29,6 +38,7 @@ def add():
             return
         else:
             grafics.push("Enter proper option.")
+    # Make the queries to write the train details to the database.
     for ticket in trains:
         query=f"INSERT INTO available (name, cost, source, destination, yr) VALUES ('{ticket['Name']}', {int(ticket['Cost'])}, '{ticket['Source']}', '{ticket['Destination']}', {ticket['Year']});"
         cur.execute(query)
@@ -47,6 +57,7 @@ def add():
 def listAll():
     grafics.push("Here are all the Trains:")
     cur.execute("SELECT * FROM available ORDER BY id")
+    # Takes the data and reforms them to a box-printable form.
     grafics.showRow([{"Name":i[0],"Cost":str(i[1]),"Source":i[2],"Destination":i[3],"Year":str(i[4])}
                      for i in cur.fetchall()])
 
@@ -66,6 +77,7 @@ def cancel():
                 grafics.push("Enter proper option.")
     trains = command.number(
         [{"Name": i[0], "Cost": str(i[1]), "Source": i[2], "Destination": i[3], "Year": str(i[4])} for i in x])
+    # Stores the ids in a separate list as ids are not printed, but will be needed later to address the specific train.
     ids = command.number([{"id": i[5]} for i in x])
     grafics.push("Select the train you want to edit: ")
     grafics.showRow(trains)
@@ -85,6 +97,7 @@ def cancel():
             return
         else:
             grafics.push("Enter proper option.")
+    # Makes required queries.
     cur.execute(f"DELETE FROM available WHERE id={ids[t-1]['id']}")
     db.commit()
     grafics.push(f"{trains[t - 1]['Name']} Removed.")
@@ -114,6 +127,7 @@ def mod():
                 grafics.push("Enter proper option.")
     trains = command.number(
         [{"Name": i[0], "Cost": str(i[1]), "Source": i[2], "Destination": i[3], "Year": str(i[4])} for i in x])
+    # Stores the ids in a separate list as ids are not printed, but will be needed later to address the specific train.
     ids = command.number([{"id": i[5]} for i in x])
     grafics.push("Select the train you want to edit: ")
     grafics.showRow(trains)
@@ -136,6 +150,7 @@ def mod():
             return
         else:
             grafics.push("Enter proper option.")
+    # Makes required queries.
     cur.execute(f"UPDATE available SET name='{train[0]['Name']}', cost={int(train[0]['Cost'])}, source='{train[0]['Source']}', destination='{train[0]['Destination']}', yr={int(train[0]['Year'])} WHERE id={ids[t - 1]['id']}")
     db.commit()
     grafics.push(f"{trains[t - 1]['Name']} Edited.")
